@@ -7,26 +7,13 @@ yellow = 3
 
 buzzer = 4
 
-A1 = 5
-B1 = 6
-C1 = 7
-D1 = 8
-E1 = 9
-F1 = 10
-G1 = 11
-
-A2 = 12
-B2 = 13
-C2 = 14
-D2 = 15
-E2 = 16
-F2 = 17
-G2 = 18
+display1 = [5, 6, 7, 8, 9, 10, 11]
+display2 = [12, 13, 14, 15, 16, 17, 18]
 
 trigger = 19
 echo = 20
 
-sete_segmentos[10][7] = [
+sete_segmentos = [
     [ 1,1,1,1,1,1,0 ], # = Digito 0
     [ 0,1,1,0,0,0,0 ], # = Digito 1
     [ 1,1,0,1,1,0,1 ], # = Digito 2
@@ -46,20 +33,64 @@ GPIO.setup(yellow, GPIO.OUT)
 GPIO.setup(buzzer, GPIO.OUT)
 GPIO.setup(trigger, GPIO.OUT)
 GPIO.setup(echo, GPIO.IN)
-GPIO.setup(A1, GPIO.OUT)
-GPIO.setup(B1, GPIO.OUT)
-GPIO.setup(C1, GPIO.OUT)
-GPIO.setup(D1, GPIO.OUT)
-GPIO.setup(E1, GPIO.OUT)
-GPIO.setup(F1, GPIO.OUT)
-GPIO.setup(G1, GPIO.OUT)
-GPIO.setup(A2, GPIO.OUT)
-GPIO.setup(B2, GPIO.OUT)
-GPIO.setup(C2, GPIO.OUT)
-GPIO.setup(D2, GPIO.OUT)
-GPIO.setup(E2, GPIO.OUT)
-GPIO.setup(F2, GPIO.OUT)
-GPIO.setup(G2, GPIO.OUT)
+for output in display1:
+    GPIO.setup(output, GPIO.OUT)
+for output in display2:
+    GPIO.setup(output, GPIO.OUT)
+
+def distance():
+    GPIO.output(trigger, True)
+    # set Trigger after 0.01ms to LOW
+    time.sleep(0.00001)
+    GPIO.output(trigger, False)
+    StartTime = time.time()
+    StopTime = time.time()
+
+    while GPIO.input(echo) == 0:
+        StartTime = time.time()
+
+    while GPIO.input(echo) == 1:
+        StopTime = time.time()
+
+    TimeElapsed = StopTime - StartTime
+    # multiply with the sonic speed (34300 cm/s)
+    distance = (TimeElapsed * 34300) / 2
+
+    return distance
+
+def display_write(centimeters):
+    if centimeters > 99:
+        centimeters = 99
+    number1 = int(centimeters/10)
+    number2 = centimeters % 10
+    segmentos1 = sete_segmentos[number1]
+    segmentos2 = sete_segmentos[number2]
+    for i in range(len(display1)):
+        GPIO.output(display1[i], segmentos1[i])
+    for i in range(len(display2)):
+        GPIO.output(display2[i], segmentos2[i])
 
 while True:
-    pass()
+    dist = distance()
+    display_write(dist)
+    if dist == 0:
+        GPIO.output(red, 1)
+        GPIO.output(yellow, 1)
+        GPIO.output(green, 1)
+        time.sleep(1)
+        GPIO.output(red, 0)
+        GPIO.output(yellow, 0)
+        GPIO.output(green, 0)
+    elif dist <= 33:
+        GPIO.output(red, 1)
+        GPIO.output(yellow, 0)
+        GPIO.output(green, 0)
+    elif dist <= 66:
+        GPIO.output(red, 0)
+        GPIO.output(yellow, 1)
+        GPIO.output(green, 0)
+    else:
+        GPIO.output(red, 0)
+        GPIO.output(yellow, 0)
+        GPIO.output(green, 1)
+    
