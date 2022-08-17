@@ -1,17 +1,15 @@
 import RPi.GPIO as GPIO
 import time
+import json
+import socket
 
 green = 15
 red = 11
 yellow = 13
 
-buzzer = 40
+mov_sensor = 40
 
 display1 = [23, 29, 31, 33, 35, 37, 12]
-display2 = [16, 18, 22, 24, 26, 32, 36]
-
-trigger = 19
-echo = 21
 
 sete_segmentos = [
     [ 1,1,1,1,1,1,0 ], # = Digito 0
@@ -31,84 +29,58 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(red, GPIO.OUT)
 GPIO.setup(green, GPIO.OUT)
 GPIO.setup(yellow, GPIO.OUT)
-GPIO.setup(buzzer, GPIO.OUT)
-GPIO.setup(trigger, GPIO.OUT)
-GPIO.setup(echo, GPIO.IN)
+GPIO.setup(mov_sensor, GPIO.IN)
 for output in display1:
     GPIO.setup(output, GPIO.OUT)
-for output in display2:
-    GPIO.setup(output, GPIO.OUT)
 
-buzz = GPIO.PWM(buzzer, 440)
-buzz.start(0)
+def get_config():
+    pass
 
-def distance():
-    GPIO.output(trigger, True)
-    # set Trigger after 0.01ms to LOW
-    time.sleep(0.00001)
-    GPIO.output(trigger, False)
-    StartTime = time.time()
-    StopTime = time.time()
-    initial_time = time.time()
-    while GPIO.input(echo) == 0:
-        StartTime = time.time()
+def reply_request():
+    pass
 
-    initial_time = time.time()
-    while GPIO.input(echo) == 1:
-        StopTime = time.time()
-
-    TimeElapsed = StopTime - StartTime
-    # multiply with the sonic speed (34300 cm/s)
-    distance = (TimeElapsed * 34300) / 2
-
-    return distance
-
-def display_write(centimeters):
-    if centimeters > 99:
-        centimeters = 99
-    number1 = int(centimeters/10)
-    number2 = int(centimeters % 10)
+def display_write(time):
+    if time > 9:
+        time = 9
+    number1 = int(time % 10)
     segmentos1 = sete_segmentos[number1]
-    segmentos2 = sete_segmentos[number2]
     for i in range(len(display1)):
         GPIO.output(display1[i], segmentos1[i])
-    for i in range(len(display2)):
-        GPIO.output(display2[i], segmentos2[i])
+
+red_time = 1
+yellow_time = 1
+green_time = 1
+state = "red"
+state_time = 0
+previous_movement = 0
+car_log = {"red": 0, "green": 0}
+config_log = {"name": [], "time": []}
 
 while True:    
-    dist = distance()
-    display_write(dist)
-    print(dist)
-    if dist < 0:
-        dist = 0
-    if dist > 99:
-        dist = 99
-    
-    if dist <= 5:
-        GPIO.output(buzzer, 1)
-        GPIO.output(red, 1)
-        GPIO.output(yellow, 1)
-        GPIO.output(green, 1)
-        time.sleep(0.25)
-        GPIO.output(red, 0)
-        GPIO.output(yellow, 0)
-        GPIO.output(green, 0)
-    elif dist <= 15:
-        GPIO.output(red, 1)
-        GPIO.output(yellow, 0)
-        GPIO.output(green, 0)
-    elif dist <= 30:
-        GPIO.output(red, 0)
-        GPIO.output(yellow, 1)
-        GPIO.output(green, 0)
-    else:
-        GPIO.output(red, 0)
-        GPIO.output(yellow, 0)
-        GPIO.output(green, 1)
+    config = get_config() # if socket?
+    reply_request() # if?
+    if state == "red":
+        time.sleep(0.1)
+        state_time += 0.1
+        if state_time == red_time:
+            state = "green"
+            state_time = 0
+            previous_movement = 0
+    elif state == "yellow":
+        time.sleep(yellow_time)
+        state = "red"
+        state_time = 0
+    elif state == "green":
+        time.sleep(0.1)
+        state_time += 0.1
+        display_write(int(green_time - state_time))
+        if state_time == green_time:
+            state = "yellow"
+            state_time = 0
+            previous_movement = 0
 
-    buzz.ChangeDutyCycle(99-dist)
-    time.sleep(dist/200)
-    if dist > 5:
-        buzz.ChangeDutyCycle(0)
-        time.sleep(dist/200)
-    
+    mov_read = GPIO.input(mov_sensor)
+    if mov_read != previous_movement and previous_movement == 0 and state != "yellow":
+        car_log[state] += 1
+    previous_movement = mov_read
+
