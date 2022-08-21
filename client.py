@@ -3,11 +3,11 @@ import socket
 
 print('Escreva um dos comandos:')
 print('1. SETUP \'nome do usuário(sem espaço)\' \'tempo led vermelho\' \'tempo led amarelo\' \'tempo led verde\'')
-print('2. GETDATA \'tipo de log a ser recolhido (cars ou setup)\'')
+print('2. GETDATA \'tipo de log a ser recolhido (CARS ou SETUP)\'')
 texts = input().split(' ')
 command = texts[0]
 mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-mysock.connect(('127.0.0.1', 2035))
+mysock.connect(('127.0.0.1', 2045))
 if command == 'SETUP':
     username = texts[1]
     colors = (int(texts[2]), int(texts[3]), int(texts[4]))
@@ -21,7 +21,7 @@ if command == 'SETUP':
     data = bytes(json.dumps(struct), 'utf-8')
     mysock.sendall(data)
 elif command == 'GETDATA':
-    log_type: texts[1]
+    log_type = texts[1]
     struct = {
         'command': command,
         'log_type': log_type

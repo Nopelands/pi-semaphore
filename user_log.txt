@@ -1,0 +1,5 @@
+Sam configured at 2022-08-21 14:14:31.935352 these specs: red_time - 2, yellow_time - 2, green_time - 6
+maria configured at 2022-08-21 17:26:11.965211 these specs: red_time - 2, yellow_time - 4, green_time - 5
+SILVIO configured at 2022-08-21 18:22:41.113341 these specs: red_time - 4, yellow_time - 1, green_time - 6
+SAMUEL configured at 2022-08-21 18:25:28.896720 these specs: red_time - 5, yellow_time - 1, green_time - 6
+SAMUEL configured at 2022-08-21 18:26:01.623996 these specs: red_time - 1, yellow_time - 1, green_time - 1
